@@ -6,7 +6,9 @@
 * ### 锁标记存在于monitor对象头的markword中
 
 # 对象头包括内容
-
+* ### markword
+* ### 指向类信息的指针
+* ### 如果是数组对象，数组的length
 
 # 例子
 # synchronized代码块

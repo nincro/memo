@@ -22,26 +22,32 @@ res 在堆中的内存分配由三个部分组成，分别是 对象头，实例
 >thread1 发现
 1 markword中锁标识为01，
 2 且没有指向的threadid，而是该对象的hashcode，
-3 且偏向标志为可以偏向。
+3 且偏向标志为0没偏向。
 那么通过cas操作，对该markword进行修改，将hashcode改为thread1的ThreadID。至此 res 偏向thread1。
 之后如果thread1再次请求该锁，那么只需要验证res的指针仍然指向thread1即可，无需再次进行CAS操作。这说明偏向锁也是一种可重入锁。
 
-### 从偏向锁（01）降级为无锁（01）再升级到偏向锁（01）
+### 从偏向锁（01）开始
 >thread2 发现
 1 markword中锁标识为01，
 2 且有指向的threadid，该id不是thread2的，而是thread1的
-3 且偏向标志为可以偏向。
+3 且偏向标志为1已偏向。
 那么通知虚拟机查看该threadid指向的thread1是否已经停止执行。
-1 如果已经停止执行，那么偏向锁会降级为无锁，然后thread2再次尝试使用CAS修改res偏向自己。
-2 如果还在执行，
+1 如果已经停止执行，那么jvm会撤销 revoke这个偏向锁，降级为无锁，然后thread2再次尝试使用CAS修改markword使锁偏向自己。
+2 如果还在执行，那么jvm会等待thread1 运行到安全点，然后暂停thread1，撤销 revoke 这个偏向锁，升级为轻量级锁。
 
-### 2 从偏向锁（01）升级到轻量级锁（00），这里需要分为两种情况讨论。
->1 thread1 对 markword 的 cas 操作失败，则通知撤销偏向锁，升级为轻量级锁。
+### 2 从轻量级锁（00）开始
+> 升级为轻量级锁之后，此时markword会处于一个匿名的状态，thread1会在它的栈帧中开辟一个内存空间用于存储锁记录
+然后修改markword，使其指向自己的锁记录。
+再拷贝该匿名markword放到其中，
+thread2 则会对那个匿名markword做CAS操作，尝试修改markword指向自己的锁记录。
+这里需要分为两种情况讨论。
+>> ### 如果thread1 在thread2自旋超时前离开同步区
+对那个markword与自己displaced markword做比对成功，那么将markword恢复为匿名状态
+那么 thread2 顺利CAS修改markword指向自己的锁记录。
+然后开始执行同步代码
+>> ### 如果thread2自旋超时，那么会修改轻量级锁为重量级锁，然后进入锁池中。
 
->1 thread2 发现 markword 标识处于偏向锁状态， 偏向的threadID 不是 thread2的， 通知撤销偏向锁，升级为轻量级锁。
-
->接下来是共同的部分。
->虚拟机运行到safe point的时候（此时没有任何字节码在运行），Stop The World， 然后将markword设置为偏向锁的状态
-
-
-### 3 从轻量级锁（00）升级到重量级锁（10）
+### 3 从重量级锁（10）开始
+> 升级为重量级锁之后，thread1离开同步代码块的时候，将markword与自己的displaced markword比对失败
+知道已经升级为重量级锁了，于是虚拟机修改锁池中的其他线程状态为可执行状态，相当于唤醒了锁池中的线程
+开始下一轮的竞争。
