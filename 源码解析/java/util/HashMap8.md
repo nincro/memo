@@ -117,6 +117,19 @@ transient Node<K,V>[] table;
 之后要将modCount加1，表示对结构的更改次数。
 最后更新hashmap的大小，大于threshold则走resize
 
+## remove(Object key)
+```java
+```
+> 调用了removeNode 函数，
+传入哈希桶数组下标，key，value
+获取返回Node，如果有的话
+
+## removeNode()
+```java
+```
+> 
+
+
 # 内部类
 ## Node
 ```java

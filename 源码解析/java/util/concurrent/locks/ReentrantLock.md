@@ -61,9 +61,29 @@ final void lock() {
 >>> ### 如果尝试占有成功
 那么就返回true
 >>> ### 否则
-就要尝试将当前线程封装为一个阻塞队列的结点
+就要走 aquireQueued 函数
+尝试将当前线程封装为一个阻塞队列的结点
 然后加入道阻塞队列中。
+>>>> ### 如果加入阻塞队列成功
+那么就会走 selfInterrupt 调用自己的interrupt函数
+>>>> ### 如果连加入阻塞队列都失败
+那么说明竞争非常激烈或者出现某些异常
+不再做任何操作。
+
 
 ### tryAcquire
+> ### 本函数是再 AQS 中 的acquire中进行调用的
+acquire 一共分为两个步骤
+tryAcquire为第一步。
+特化调用了 NonfairSync的tryAcquire
+这里分为两种情况
+>> ### 资源空闲出来了
+那么CAS尝试占有资源，失败返回false
+>> ### 锁重入
+那么将资源增加上acquires的数目然后返回true
+> 其他的情况都返回false
+返回false之后，AQS就会采取第二个步骤 acquireQueued 在队列中进行竞争。
+
+
 
 ## FairSync

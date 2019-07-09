@@ -61,7 +61,7 @@ nextTable != null，说明扩容方法还没有真正退出，一般可以认为
 
 
 ## Segment<K,V>[] segments
-> 把哈希桶数组分为多个，每个segment中有部分的table
+> 这里只对低版本做兼容，没有实际意义。
 
 ## int sizeCtl
 ```java

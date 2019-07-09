@@ -193,6 +193,9 @@ private volatile RejectedExecutionHandler handler;
 那么只能拒绝任务
 
 ## submit()
+> ### 执行有返回值的任务
+传入的东西可以是 Runnable 或者 callable，最终都会转为callable
+然后返回一个Future<T> 给调用者，以获取返回值。
 
 
 ## runWorker(Worker w)

@@ -37,7 +37,7 @@ public static ExecutorService newSingleThreadExecutor()
 ```
 > ### 使用单个worker线程的Executor
 SingleThreadExecutor把 **corePoolSize** 和 **maximumPoolSize** 均被设置为 **1**
-> ### 使用 无界队列LinkedBlockingQueue
+> ### 使用 无界队列 **LinkedBlockingQueue**
 所以带来的影响和FixedThreadPool一样。
 
 ### newCachedThreadPool
@@ -61,3 +61,13 @@ public static ExecutorService newCachedThreadPool()
 // workQueue == new DelayedWorkQueue()
 public static ScheduledExecutorService newScheduledThreadPool(int corePoolSize)
 ```
+>一个用于定时任务执行的线程池
+* ### corePool = 0
+意味着所有的任务一提交就会加入到阻塞队列中
+* ### maximumPoolSize = Integer.MAX_VALUE
+* ### 阻塞队列采用的 **DelayedWorkQueue**
+默认初始长度为16，会调用grow函数进行扩容。
+* ### keepAliveTime 为0 unit 为TimeUnit.SECONDS
+* ### 适合以下业务场景
+>> * 指定延时后执行任务。
+>> * 周期性重复执行任务。
